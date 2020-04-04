@@ -1,0 +1,173 @@
+---
+title: "Work from Home"
+author: "M. Chae"
+date: '2020 4 4 '
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Survey result about work from home  
+
+This document summarize the survey result of work from home for three weeks because of the COVID-19.
+
+
+### Description of the survey 
+
+* Background: The number of confirmed cases of COVID-19 is increasing, so we decided to take a work from home policy. 
+* Purpose: examination of the effect of work from home 
+* Survey period: March 2020 
+* Sample: n = 436
+
+
+## level of cooperation & efficiency by position/responsibility
+
+```{r include=FALSE}
+library(tidyverse)
+library(readr)
+library(car)
+read.csv.any <- function(text, sep = "", ...) {
+  encoding <- as.character(guess_encoding(text)[1,1])
+  setting <- as.character(tools::file_ext(text))
+  if(sep != "" | !(setting  %in% c("csv", "txt")) ) setting <- "custom"
+  separate <- list(csv = ",", txt = "\n", custom = sep)
+  result <- read.table(text, sep = separate[[setting]], fileEncoding = encoding, ...)
+  return(result)
+}
+df <- read.csv.any("c:/Users/MC/R/work-from-home-survey/survey_num.csv", header = TRUE, na.strings = c("NA", ""))
+df$efficiency <- recode(df$efficiency, "'100' = 3 ; '100~80' =  2 ; '150~100' = 4")
+df$efficiency <- as.numeric(df$efficiency)
+df_stfc <- df %>% 
+  group_by(position, responsibility) %>% 
+  summarise(mean_stfc = mean(satisfaction, na.rm = TRUE))
+df_stfc
+
+df_prvc <- df %>% 
+  group_by(position, responsibility) %>% 
+  summarise(mean_prvc = mean(privacy, na.rm = TRUE))
+df_prvc
+
+df_effi <- df %>% 
+  group_by(position, responsibility) %>% 
+  summarise(mean_effi = mean(efficiency, na.rm = TRUE))
+df_effi
+
+df_effi_days <- df %>% 
+  group_by(days, position, responsibility) %>% 
+  summarise(mean_effi = mean(efficiency, na.rm = TRUE))
+df_effi_days
+
+df_coop <- df %>% 
+  group_by(position, responsibility) %>% 
+  summarise(mean_coop = mean(cooperation))
+df_coop
+
+df_coop_days <- df %>% 
+  group_by(days, position, responsibility) %>% 
+  summarise(mean_coop = mean(cooperation))
+df_coop_days
+```
+
+
+```{r warning=FALSE}
+ggplot(df_coop, aes(position, mean_coop, fill = responsibility))+
+  geom_col(position = "dodge")
+
+ggplot(df_coop_days, aes(days, mean_coop, fill = position))+
+  geom_col(position = "dodge")
+
+ggplot(df_effi, aes(position, mean_effi, fill = responsibility))+
+  geom_col(position = "dodge")
+
+ggplot(df_effi_days, aes(days, mean_effi, fill = position))+
+  geom_col(position = "dodge")
+```
+
+## The relation between efficiency and cooperation
+
+```{r warning=FALSE}
+ggplot(df, aes(efficiency, cooperation))+
+  geom_point(mapping = aes(color = days, shpae = days))+
+  geom_smooth(color = 'black', fill = 'grey')+
+  facet_wrap(~position)
+```
+
+## The level of efficiency & cooperation by the duration 
+
+
+```{r warning=FALSE}
+ggplot(df_coop_days, aes(days, mean_coop))+
+  geom_point(mapping = aes(color = position, shape = responsibility))+
+  geom_boxplot()+
+  theme_bw()
+
+ggplot(df_effi_days, aes(days, mean_effi))+
+  geom_point(mapping = aes(color = position, shape = responsibility))+
+  geom_boxplot()+
+  theme_bw()
+```
+
+## Correlations between the four variables
+
+```{r message=FALSE, warning=FALSE}
+df_narm <- na.omit(df)
+cor(df[,c(3:6)],method=c("pearson"))
+
+library(PerformanceAnalytics)
+chart.Correlation(df_narm[,c(3:6)],pch=19)
+
+```
+
+## Comments from repondents
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+library(KoNLP) #loading the required libraries for wordcloud 
+library(wordcloud)
+library(stringr)
+library(XML)
+library(rvest)
+library(tm)
+library(igraph)
+library(wordcloud2)
+library(arules)
+library(combinat)
+library(multilinguer)
+
+.libPaths()
+useSejongDic()
+
+comments <- readLines("c:/users/MC/R/work-from-home-survey/comments.txt", encoding = "UTF-8")
+
+comments <- paste0(comments, collapse = "")
+
+nouns <- extractNoun(comments)
+nouns1 <- unlist(nouns)
+nouns2 <- Filter(function(x) {nchar(x) <= 20 & nchar(x) > 1}, nouns1)
+
+nouns2 <- gsub(" ","", nouns2)
+nouns2 <- gsub("<.+?>|\t", "", nouns2)
+nouns2 <- gsub("\\d+","" ,nouns2)	
+nouns2 <- gsub("\\.","" ,nouns2) 
+nouns2 <- gsub("재택근무","" ,nouns2)
+nouns2 <- gsub("생각","" ,nouns2)
+nouns2 <- gsub("업무","" ,nouns2)
+nouns2 <- gsub("근무","" ,nouns2)
+nouns2 <- gsub("재택","" ,nouns2)
+nouns2 <- gsub("하기","" ,nouns2)
+nouns2 <- gsub("관련","" ,nouns2)
+nouns2 <- gsub("들이","" ,nouns2)
+str(nouns2)
+
+nouns3 <- Filter(function(x) {nchar(x) <= 20 & nchar(x) > 1}, nouns2)
+
+wordcount <- table(nouns3)
+
+windowsFonts(malgun=windowsFont("맑은고딕"))
+wordcloud2(data=wordcount, minSize = 5, 
+           minRotation = 0, maxRotation = 0, rotateRatio = 1, 
+           fontFamily='맑은고딕',size=0.8)
+```
+
