@@ -23,7 +23,7 @@ This document summarize the survey result of work from home for three weeks beca
 * Sample: n = 436
 
 
-## level of cooperation & efficiency by position/responsibility
+## The level of cooperation & efficiency by position/responsibility
 
 ```{r include=FALSE}
 library(tidyverse)
