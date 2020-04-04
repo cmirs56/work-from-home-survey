@@ -1,5 +1,4 @@
 
-
 # road the libraries and data ---------------------------------------------
 
 library(tidyverse)
@@ -13,16 +12,20 @@ read.csv.any <- function(text, sep = "", ...) {
   result <- read.table(text, sep = separate[[setting]], fileEncoding = encoding, ...)
   return(result)
 }
-df <- read.csv.any("c:/Users/MC/R/survey_telework/survey_num.csv", header = TRUE, na.strings = c("NA", ""))
+df <- read.csv.any("c:/Users/MC/R/work-from-home-survey/survey_num.csv", header = TRUE, na.strings = c("NA", ""))
 df$efficiency <- recode(df$efficiency, "'100' = 3 ; '100~80' =  2 ; '150~100' = 4")
 df$efficiency <- as.numeric(df$efficiency)
 
-#### outline of the dataframe  
+
+# basic information of the data -------------------------------------------
+
 str(df)
 head(df)
 summary(df)
 
-#### mean subset
+
+# mean of subsets ---------------------------------------------------------
+
 df_stfc <- df %>% 
   group_by(position, responsibility) %>% 
   summarise(mean_stfc = mean(satisfaction, na.rm = TRUE))
@@ -53,23 +56,27 @@ df_coop_days <- df %>%
   summarise(mean_coop = mean(cooperation))
 df_coop_days
 
-#### overall 
+
+# the four major variables ------------------------------------------------
+
 df_all <- tibble(
   `satisfaction` = mean(df_stfc$mean_stfc), 
   `efficiency` = mean(df_effi$mean_effi), 
   `cooperation` = mean(df_coop$mean_coop),
   `privacy` = mean(df_prvc$mean_prvc) 
-)
+) # mean of means != mean (this calculation is useless) 
 df_all
-df_all_t <- t(df_all) #switching_row & column 
+df_all_t <- t(df_all) # switch row & column 
 df_all_t
 str(df_all_t)
 df_all_df <- as.data.frame(df_all_t)
 
 ggplot(df_all_df, aes([1,1],V1))+
-  geom_col(position = "dodge")     #unsolved
+  geom_col(position = "dodge")  # not solved
 
-#### mean_coop/effi & position & responsibility 
+
+# level of cooperation & efficiency by position/responsibility ------------
+
 ggplot(df_coop, aes(position, mean_coop, fill = responsibility))+
   geom_col(position = "dodge")
 
@@ -82,13 +89,17 @@ ggplot(df_effi, aes(position, mean_effi, fill = responsibility))+
 ggplot(df_effi_days, aes(days, mean_effi, fill = position))+
   geom_col(position = "dodge")
 
-#### the relation between efficiency and cooperation 
+
+# the relation between efficiency and cooperation -------------------------
+
 ggplot(df, aes(efficiency, cooperation))+
   geom_point(mapping = aes(color = days, shpae = days))+
   geom_smooth(color = 'black', fill = 'grey')+
   facet_wrap(~position)
 
-#### days & position & respinsibility & efficiency/cooperation
+
+# the level of efficiency/cooperation by position, responsibility, --------
+
 ggplot(df_coop_days, aes(days, mean_coop))+
   geom_point(mapping = aes(color = position, shape = responsibility))+
   geom_boxplot()+
@@ -100,9 +111,8 @@ ggplot(df_effi_days, aes(days, mean_effi))+
   theme_bw()
 
 
+# what should be improved  ------------------------------------------------
 
-
-#### improvement 
 df_imprv <- df %>% 
   select(improvement, responsibility) 
 df_imprv  
@@ -111,14 +121,11 @@ ggplot(df_imprv, aes(improvement, fill = responsibility))+
   geom_bar(position = "dodge")+
   coord_flip()
 
-# 상관분석
+
+# correlations between the four variables ---------------------------------
+
 df_narm <- na.omit(df)
 cor(df[,c(3:6)],method=c("pearson"))
 
 library(PerformanceAnalytics)
 chart.Correlation(df_narm[,c(3:6)],pch=19)
-
-df_0days <- df %>% 
-filter(df$days == "0일")
-df_0days
-nrow(df_0days)           
