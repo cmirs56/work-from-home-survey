@@ -4,6 +4,8 @@
 library(tidyverse)
 library(readr)
 library(car)
+library(ggplot2)
+
 read.csv.any <- function(text, sep = "", ...) {
   encoding <- as.character(guess_encoding(text)[1,1])
   setting <- as.character(tools::file_ext(text))
@@ -12,7 +14,7 @@ read.csv.any <- function(text, sep = "", ...) {
   result <- read.table(text, sep = separate[[setting]], fileEncoding = encoding, ...)
   return(result)
 }
-df <- read.csv.any("c:/Users/MC/R/work-from-home-survey/survey_num.csv", header = TRUE, na.strings = c("NA", ""))
+df <- read.csv.any("c:/Users/R/survey_telework/survey_num.csv", header = TRUE, na.strings = c("NA", ""))
 df$efficiency <- recode(df$efficiency, "'100' = 3 ; '100~80' =  2 ; '150~100' = 4")
 df$efficiency <- as.numeric(df$efficiency)
 
@@ -22,6 +24,80 @@ df$efficiency <- as.numeric(df$efficiency)
 str(df)
 head(df)
 summary(df)
+
+
+# 정규분포 검정_meaningless b/c the 4 variables are all 서열변수 not 연속변수
+# Ho: normal / H1: non-normal 
+
+shapiro.test(df$satisfaction)
+shapiro.test(df$efficiency)
+shapiro.test(df$cooperation)
+shapiro.test(df$privacy)
+
+hist(df$efficiency, breaks = 20)
+hist(df$efficiency, freq = FALSE, breaks = 20, main = "Kernel Density Plot of df$harassment")
+lines(density(df$efficiency), col = "blue", lwd = 3)
+
+qqnorm(df$efficiency)
+qqline(df$efficiency)
+
+
+# Kruskal Wallis H test ---------------------------------------------------
+
+kruskal.test(df$satisfaction ~ df$days, data = df) 
+kruskal.test(df$satisfaction ~ df$affiliate, data = df)
+kruskal.test(df$satisfaction ~ df$position, data = df)
+kruskal.test(df$satisfaction ~ df$responsibility, data = df)
+
+kruskal.test(df$efficiency ~ df$days, data = df) 
+kruskal.test(df$efficiency ~ df$affiliate, data = df)
+kruskal.test(df$efficiency ~ df$position, data = df)
+kruskal.test(df$efficiency ~ df$responsibility, data = df)
+
+kruskal.test(df$cooperation ~ df$days, data = df) 
+kruskal.test(df$cooperation ~ df$affiliate, data = df)
+kruskal.test(df$cooperation ~ df$position, data = df)
+kruskal.test(df$cooperation ~ df$responsibility, data = df)
+
+kruskal.test(df$privacy ~ df$days, data = df) 
+kruskal.test(df$privacy ~ df$affiliate, data = df)
+kruskal.test(df$privacy ~ df$position, data = df)
+kruskal.test(df$privacy ~ df$responsibility, data = df)
+
+
+
+# post test ---------------------------------------------------------------
+
+library(userfriendlyscience)
+
+df_noNAstis <- na.omit(df, cols = satisfaction) 
+df_noNAeffi <- na.omit(df, cols = efficiency)
+df_noNAcoop <- na.omit(df, cols = cooperation)
+df_noNApriv <- na.omit(df, cols = privacy)
+
+posthocTGH(df_noNAstis$days, y = df_noNAstis$satisfaction, method = 'games-howell')
+posthocTGH(df_noNAstis$affiliate, y = df_noNAstis$satisfaction, method = 'games-howell')
+posthocTGH(df_noNAstis$position, y = df_noNAstis$satisfaction, method = 'games-howell')
+posthocTGH(df_noNAstis$responsibility, y = df_noNAstis$satisfaction, method = 'games-howell')
+
+posthocTGH(df_noNAeffi$days, y = df_noNAeffi$efficiency, method = 'games-howell')
+posthocTGH(df_noNAeffi$affiliate, y = df_noNAeffi$efficiency, method = 'games-howell')
+
+posthocTGH(df_noNAcoop$days, y = df_noNAcoop$cooperation, method = 'games-howell')
+
+posthocTGH(df_noNAstis$days, y = df_noNAstis$privacy, method = 'games-howell')
+posthocTGH(df_noNAstis$affiliate, y = df_noNAstis$privacy, method = 'games-howell')
+posthocTGH(df_noNAstis$position, y = df_noNAstis$privacy, method = 'games-howell')
+posthocTGH(df_noNAstis$responsibility, y = df_noNAstis$privacy, method = 'games-howell')
+
+
+
+# monnBook  ---------------------------------------------------------------
+
+library(moonBook)
+
+?mytable
+mytable(privacy ~ ., data = df)
 
 
 # mean of subsets ---------------------------------------------------------
