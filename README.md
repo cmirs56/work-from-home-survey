@@ -20,3 +20,5 @@ This document summarize the survey result of work from home for three weeks beca
 * The level of efficiency & cooperation by the duration 
 * Correlations between the four variables
 * Comments from repondents_wordcloud
+
+![image](https://user-images.githubusercontent.com/49851871/94010855-72941e00-fde1-11ea-8827-6afbfcb000e9.png)
